@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { LightControl } from "./lightControl";
 import { WindowDrag } from "./windowDrag";
+import { WindowResize } from "./windowResize";
 import "./App.css";
 
 const LIGHTS = ["red", "yellow", "green"] as const;
@@ -8,6 +9,7 @@ const LIGHTS = ["red", "yellow", "green"] as const;
 function App() {
   const control = useMemo(() => new LightControl(0), []);
   const drag = useMemo(() => new WindowDrag(), []);
+  const resize = useMemo(() => new WindowResize(), []);
   const active = useSyncExternalStore(control.subscribe, control.getActiveIndex);
 
   return (
@@ -27,6 +29,11 @@ function App() {
           </button>
         ))}
       </div>
+      <div
+        className="corner-handle"
+        data-no-drag
+        onMouseDown={resize.handleMouseDown}
+      />
     </main>
   );
 }
