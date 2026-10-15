@@ -51,11 +51,28 @@ body {
   position: relative;
   width: 6.5rem;
   height: 6.5rem;
+  padding: 0;
+  appearance: none;
   border-radius: 50%;
   border: 5px solid #2b303b;
+  cursor: pointer;
   transition:
     background 0.35s ease,
-    box-shadow 0.35s ease;
+    box-shadow 0.35s ease,
+    transform 0.15s ease;
+}
+
+.lamp.off:hover {
+  transform: translateY(-3px);
+}
+
+.lamp:active {
+  transform: scale(0.96);
+}
+
+.lamp:focus-visible {
+  outline: 4px dashed #2b303b;
+  outline-offset: 6px;
 }
 
 .lamp.red {

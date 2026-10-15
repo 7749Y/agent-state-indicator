@@ -1,30 +1,28 @@
-import { useEffect, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
+import { LightControl } from "./lightControl";
 import "./App.css";
 
 const LIGHTS = ["red", "yellow", "green"] as const;
-const SWITCH_MS = 5000;
 
 function App() {
-  const [active, setActive] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActive((prev) => (prev + 1) % LIGHTS.length);
-    }, SWITCH_MS);
-    return () => clearInterval(timer);
-  }, []);
+  const control = useMemo(() => new LightControl(0), []);
+  const active = useSyncExternalStore(control.subscribe, control.getActiveIndex);
 
   return (
     <main className="container">
       <div className="traffic-light">
         {LIGHTS.map((color, i) => (
-          <div
+          <button
             key={color}
+            type="button"
+            aria-label={color}
+            aria-pressed={i === active}
             className={`lamp ${color} ${i === active ? "on" : "off"}`}
+            onClick={() => control.touch(i)}
           >
             <span className="face" />
             <span className="mouth" />
-          </div>
+          </button>
         ))}
       </div>
     </main>
