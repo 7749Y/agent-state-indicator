@@ -1,15 +1,17 @@
 import { useMemo, useSyncExternalStore } from "react";
 import { LightControl } from "./lightControl";
+import { WindowDrag } from "./windowDrag";
 import "./App.css";
 
 const LIGHTS = ["red", "yellow", "green"] as const;
 
 function App() {
   const control = useMemo(() => new LightControl(0), []);
+  const drag = useMemo(() => new WindowDrag(), []);
   const active = useSyncExternalStore(control.subscribe, control.getActiveIndex);
 
   return (
-    <main className="container">
+    <main className="container" onMouseDown={drag.handleMouseDown}>
       <div className="traffic-light">
         {LIGHTS.map((color, i) => (
           <button
