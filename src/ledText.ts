@@ -32,7 +32,14 @@ export class LedText {
     // 没给颜色就听皮肤的
     if (this.options.color) this.track.style.color = this.options.color;
     this.measure();
+    // 屏会跟着窗口变宽窄，文字自己也会变宽（换字体、换内容），两头都得盯着
     this.observer.observe(this.panel);
+    this.observer.observe(this.track);
+    // 像素字体可能晚到，量到的宽度会变，上齐了再量一次
+    void document.fonts
+      ?.load(`${this.options.fontSize}px "Zpix"`)
+      .then(() => this.measure())
+      .catch(() => {});
     this.last = performance.now();
     this.frame = requestAnimationFrame(this.tick);
   }
@@ -49,9 +56,11 @@ export class LedText {
 
     if (this.distance > 0) {
       this.offset += this.scale * this.options.speed * dt;
-      // 走到第二份文字接上第一份的位置就绕回，视觉上无缝
+      // 走到第二份文字接上第一份的位置就绕回：减掉的正是一个周期的长度，接缝对得上
       if (this.offset >= this.distance) this.offset -= this.distance;
-      this.track.style.transform = `translateX(${-Math.round(this.offset)}px)`;
+      // 整像素取整会让每帧位移忽大忽小，接缝也跟着差一点，这里只做小数位收敛
+      const x = Math.round(this.offset * 1000) / 1000;
+      this.track.style.transform = `translateX(${-x}px)`;
     }
 
     this.frame = requestAnimationFrame(this.tick);
