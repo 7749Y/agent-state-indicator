@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { exposeControl } from "./controlApi";
 import { GhostMode } from "./ghostMode";
 import { LedScreen } from "./LedScreen";
 import { LightControl, type LightState } from "./lightControl";
@@ -22,23 +23,25 @@ const LED_OPTIONS = {
 };
 
 function App() {
-  const control = useMemo(() => new LightControl(STATE), []);
+  const control = useMemo(() => new LightControl(STATE, LED_TEXT), []);
   const drag = useMemo(() => new WindowDrag(), []);
   const resize = useMemo(() => new WindowResize(), []);
   const ghost = useMemo(() => new GhostMode(), []);
   const tray = useMemo(() => new TrayMenu(ghost), [ghost]);
   const ghosting = useSyncExternalStore(ghost.subscribe, ghost.isGhosting);
-  const state = control.getState();
-  const active = state + 1;
+  const active = useSyncExternalStore(control.subscribe, control.getState) + 1;
+  const label = useSyncExternalStore(control.subscribe, control.getDisplay);
 
   const ledOptions = useMemo(
-    () => ({ ...LED_OPTIONS, text: `[${state}] ${LED_TEXT}` }),
-    [state],
+    () => ({ ...LED_OPTIONS, text: label }),
+    [label],
   );
 
   useEffect(() => {
     void tray.mount();
   }, [tray]);
+
+  useEffect(() => exposeControl(control), [control]);
 
   return (
     <main
