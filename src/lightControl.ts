@@ -1,25 +1,9 @@
-/** 红绿灯触摸控制：记录当前点亮的灯，点谁谁亮，其余自动熄灭。 */
+/** 灯的状态：-1 红灯、0 黄灯、1 绿灯 */
+export type LightState = -1 | 0 | 1;
+
+/** 红绿灯控制：灯的亮暗由 state 决定，index = state + 1。 */
 export class LightControl {
-  private activeIndex: number;
-  private listeners = new Set<() => void>();
+  constructor(private readonly state: LightState = -1) {}
 
-  constructor(initialIndex = 0) {
-    this.activeIndex = initialIndex;
-  }
-
-  /** 点击第 index 盏灯：点亮该灯，其余熄灭。 */
-  touch(index: number) {
-    if (index === this.activeIndex) return;
-    this.activeIndex = index;
-    this.listeners.forEach((listener) => listener());
-  }
-
-  getActiveIndex = () => this.activeIndex;
-
-  subscribe = (listener: () => void) => {
-    this.listeners.add(listener);
-    return () => {
-      this.listeners.delete(listener);
-    };
-  };
+  getState = () => this.state;
 }
