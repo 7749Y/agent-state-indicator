@@ -4,7 +4,7 @@ import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
 /** 右下角角标：拖动时按初始比例缩放窗口，内容随根字号等比放大。 */
 export class WindowResize {
   private static readonly BASE_WIDTH = 164;
-  private static readonly BASE_HEIGHT = 404;
+  private static readonly BASE_HEIGHT = 472;
   private static readonly BASE_FONT = 16;
   private static readonly MIN_SCALE = 0.5;
   private static readonly MAX_SCALE = 3;
