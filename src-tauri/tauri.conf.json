@@ -16,6 +16,8 @@
         "width": 164,
         "height": 404,
         "resizable": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
         "decorations": false,
         "transparent": true,
         "shadow": false

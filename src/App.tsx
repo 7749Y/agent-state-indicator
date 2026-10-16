@@ -1,5 +1,6 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { LightControl } from "./lightControl";
+import { TrayMenu } from "./trayMenu";
 import { WindowDrag } from "./windowDrag";
 import { WindowResize } from "./windowResize";
 import "./App.css";
@@ -10,7 +11,12 @@ function App() {
   const control = useMemo(() => new LightControl(0), []);
   const drag = useMemo(() => new WindowDrag(), []);
   const resize = useMemo(() => new WindowResize(), []);
+  const tray = useMemo(() => new TrayMenu(), []);
   const active = useSyncExternalStore(control.subscribe, control.getActiveIndex);
+
+  useEffect(() => {
+    void tray.mount();
+  }, [tray]);
 
   return (
     <main className="container" onMouseDown={drag.handleMouseDown}>
