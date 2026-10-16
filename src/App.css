@@ -30,6 +30,16 @@ body,
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: opacity 0.25s ease;
+}
+
+/* 虚化模式：半透明，鼠标事件穿透，不出现角标 */
+.container.ghosting {
+  opacity: 0.5;
+}
+
+.container.ghosting .corner-handle {
+  display: none;
 }
 
 /* 右下角角标，光标进入窗口才出现 */

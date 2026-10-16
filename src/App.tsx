@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { GhostMode } from "./ghostMode";
 import { LightControl } from "./lightControl";
 import { TrayMenu } from "./trayMenu";
 import { WindowDrag } from "./windowDrag";
@@ -11,15 +12,20 @@ function App() {
   const control = useMemo(() => new LightControl(0), []);
   const drag = useMemo(() => new WindowDrag(), []);
   const resize = useMemo(() => new WindowResize(), []);
-  const tray = useMemo(() => new TrayMenu(), []);
+  const ghost = useMemo(() => new GhostMode(), []);
+  const tray = useMemo(() => new TrayMenu(ghost), [ghost]);
   const active = useSyncExternalStore(control.subscribe, control.getActiveIndex);
+  const ghosting = useSyncExternalStore(ghost.subscribe, ghost.isGhosting);
 
   useEffect(() => {
     void tray.mount();
   }, [tray]);
 
   return (
-    <main className="container" onMouseDown={drag.handleMouseDown}>
+    <main
+      className={ghosting ? "container ghosting" : "container"}
+      onMouseDown={drag.handleMouseDown}
+    >
       <div className="traffic-light">
         {LIGHTS.map((color, i) => (
           <button

@@ -1,10 +1,13 @@
 import { defaultWindowIcon, exit } from "@tauri-apps/api/app";
 import { Menu } from "@tauri-apps/api/menu";
 import { TrayIcon } from "@tauri-apps/api/tray";
+import type { GhostMode } from "./ghostMode";
 
 /** 托盘菜单：托盘图标右键弹出菜单。 */
 export class TrayMenu {
   private mounting: Promise<void> | null = null;
+
+  constructor(private ghost: GhostMode) {}
 
   /** 挂载托盘与菜单，重复调用只会建一次。 */
   mount() {
@@ -15,6 +18,11 @@ export class TrayMenu {
   private async create() {
     const menu = await Menu.new({
       items: [
+        {
+          id: "ghost",
+          text: "虚化",
+          action: () => this.ghost.toggle(),
+        },
         {
           id: "quit",
           text: "退出",
