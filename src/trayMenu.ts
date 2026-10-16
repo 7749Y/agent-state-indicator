@@ -3,6 +3,8 @@ import { Menu } from "@tauri-apps/api/menu";
 import { TrayIcon } from "@tauri-apps/api/tray";
 import type { GhostMode } from "./ghostMode";
 
+const TRAY_ID = "traffic-light";
+
 /** 托盘菜单：托盘图标右键弹出菜单。 */
 export class TrayMenu {
   private mounting: Promise<void> | null = null;
@@ -31,8 +33,15 @@ export class TrayMenu {
       ],
     });
 
+    // 托盘活在进程里，刷新后还在：换掉菜单就行，别再新建一个
+    const existing = await TrayIcon.getById(TRAY_ID);
+    if (existing) {
+      await existing.setMenu(menu);
+      return;
+    }
+
     await TrayIcon.new({
-      id: "traffic-light",
+      id: TRAY_ID,
       tooltip: "红绿灯",
       icon: (await defaultWindowIcon()) ?? undefined,
       menu,

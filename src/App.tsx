@@ -43,6 +43,10 @@ function App() {
 
   useEffect(() => exposeControl(control), [control]);
 
+  useEffect(() => {
+    void resize.sync();
+  }, [resize]);
+
   return (
     <main
       className={ghosting ? "container ghosting" : "container"}

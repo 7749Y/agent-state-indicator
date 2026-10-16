@@ -13,6 +13,16 @@ export class WindowResize {
   private pending: number | null = null;
   private frame = 0;
 
+  /** 启动时按当前窗口宽度校准根字号，刷新后不会掉回默认大小 */
+  sync = async () => {
+    const win = getCurrentWindow();
+    const [size, scale] = await Promise.all([
+      win.innerSize(),
+      win.scaleFactor(),
+    ]);
+    this.apply(this.clamp(size.toLogical(scale).width));
+  };
+
   handleMouseDown = async (event: ReactMouseEvent) => {
     if (event.button !== 0 || this.origin) return;
     event.preventDefault();
