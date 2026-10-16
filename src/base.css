@@ -1,0 +1,135 @@
+/* 共用骨架：尺寸、布局、动画。外观交给各皮肤文件。 */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  color: #3a2f4a;
+  background: transparent;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+}
+
+@font-face {
+  font-family: "Zpix";
+  src: url("/zpix.woff2") format("woff2");
+  font-display: swap;
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.25s ease;
+}
+
+.container.ghosting {
+  opacity: 0.5;
+}
+
+.container.ghosting .corner-handle {
+  display: none;
+}
+
+/* 右下角角标，光标进窗口才出现 */
+.corner-handle {
+  position: absolute;
+  right: 0.5625rem;
+  bottom: 0.5625rem;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 50%;
+  cursor: nwse-resize;
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    transform 0.15s ease;
+}
+
+.container:hover .corner-handle {
+  opacity: 1;
+}
+
+.corner-handle:active {
+  transform: scale(0.88);
+}
+
+.traffic-light {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.lamp {
+  position: relative;
+  width: 6.5rem;
+  height: 6.5rem;
+  border-radius: 50%;
+  transition:
+    background 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+/* LED 屏 */
+.led-panel {
+  width: 100%;
+  height: 3.25rem;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.led-track {
+  display: flex;
+  gap: 1rem;
+  flex: none;
+  width: max-content;
+  /* 字号与颜色默认由皮肤给，文本类可用内联样式覆盖 */
+  font-size: 1.5rem;
+  will-change: transform;
+}
+
+.led-text {
+  font-family: "Zpix", monospace;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* 文字比屏短时居中，滚动时只留一份 */
+.led-track.centered {
+  margin-inline: auto;
+}
+
+.led-panel:not(.scrolling) .led-text + .led-text {
+  display: none;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.94);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

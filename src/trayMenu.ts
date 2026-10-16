@@ -1,15 +1,20 @@
 import { defaultWindowIcon, exit } from "@tauri-apps/api/app";
-import { Menu } from "@tauri-apps/api/menu";
+import { CheckMenuItem, Menu, Submenu } from "@tauri-apps/api/menu";
 import { TrayIcon } from "@tauri-apps/api/tray";
 import type { GhostMode } from "./ghostMode";
+import { SKIN_LABELS, SKINS, type Skin, type SkinName } from "./skin";
 
 const TRAY_ID = "traffic-light";
 
 /** 托盘菜单：托盘图标右键弹出菜单。 */
 export class TrayMenu {
   private mounting: Promise<void> | null = null;
+  private skinItems = new Map<SkinName, CheckMenuItem>();
 
-  constructor(private ghost: GhostMode) {}
+  constructor(
+    private ghost: GhostMode,
+    private skin: Skin,
+  ) {}
 
   /** 挂载托盘与菜单，重复调用只会建一次。 */
   mount() {
@@ -25,6 +30,7 @@ export class TrayMenu {
           text: "虚化",
           action: () => this.ghost.toggle(),
         },
+        await this.skinSubmenu(),
         {
           id: "quit",
           text: "退出",
@@ -46,6 +52,25 @@ export class TrayMenu {
       icon: (await defaultWindowIcon()) ?? undefined,
       menu,
       showMenuOnLeftClick: false,
+    });
+  }
+
+  /** 皮肤二级菜单：每套一个勾选项，点哪项切哪项 */
+  private async skinSubmenu() {
+    const items = await Promise.all(SKINS.map((name) => this.skinItem(name)));
+    items.forEach((item, index) => this.skinItems.set(SKINS[index], item));
+    return Submenu.new({ text: "皮肤", items });
+  }
+
+  private async skinItem(name: SkinName) {
+    return CheckMenuItem.new({
+      id: `skin-${name}`,
+      text: SKIN_LABELS[name],
+      checked: this.skin.getSkin() === name,
+      action: () => {
+        this.skin.set(name);
+        this.skinItems.forEach((item, key) => void item.setChecked(key === name));
+      },
     });
   }
 }

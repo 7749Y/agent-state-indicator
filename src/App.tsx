@@ -4,10 +4,10 @@ import { exposeControl } from "./controlApi";
 import { GhostMode } from "./ghostMode";
 import { LedScreen } from "./LedScreen";
 import { LightControl, type LightState } from "./lightControl";
+import { Skin } from "./skin";
 import { TrayMenu } from "./trayMenu";
 import { WindowDrag } from "./windowDrag";
 import { WindowResize } from "./windowResize";
-import "./App.css";
 
 const LIGHTS = ["red", "yellow", "green"] as const;
 
@@ -28,7 +28,8 @@ function App() {
   const drag = useMemo(() => new WindowDrag(), []);
   const resize = useMemo(() => new WindowResize(), []);
   const ghost = useMemo(() => new GhostMode(), []);
-  const tray = useMemo(() => new TrayMenu(ghost), [ghost]);
+  const skin = useMemo(() => new Skin(), []);
+  const tray = useMemo(() => new TrayMenu(ghost, skin), [ghost, skin]);
   const ghosting = useSyncExternalStore(ghost.subscribe, ghost.isGhosting);
   const active = useSyncExternalStore(control.subscribe, control.getState) + 1;
   const label = useSyncExternalStore(control.subscribe, control.getDisplay);

@@ -29,7 +29,8 @@ export class LedText {
 
   start() {
     this.track.style.fontSize = `${this.options.fontSize / 16}rem`;
-    this.track.style.color = this.options.color ?? "#ff4d5e";
+    // 没给颜色就听皮肤的
+    if (this.options.color) this.track.style.color = this.options.color;
     this.measure();
     this.observer.observe(this.panel);
     this.last = performance.now();
