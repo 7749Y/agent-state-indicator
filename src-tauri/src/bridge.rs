@@ -92,17 +92,30 @@ fn make_token() -> String {
     token
 }
 
+fn info_path(app: &AppHandle) -> Option<std::path::PathBuf> {
+    app.path().app_data_dir().ok().map(|dir| dir.join("bridge.json"))
+}
+
 fn write_info(app: &AppHandle, port: u16, token: &str) -> bool {
-    let dir = match app.path().app_data_dir() {
-        Ok(dir) => dir,
-        Err(_) => return false,
+    let Some(path) = info_path(app) else {
+        return false;
     };
-    if std::fs::create_dir_all(&dir).is_err() {
+    let Some(dir) = path.parent() else {
+        return false;
+    };
+    if std::fs::create_dir_all(dir).is_err() {
         return false;
     }
 
     let info = serde_json::json!({ "port": port, "token": token });
-    std::fs::write(dir.join("bridge.json"), info.to_string()).is_ok()
+    std::fs::write(path, info.to_string()).is_ok()
+}
+
+/// 退出时删掉 bridge.json，免得 CLI 照着过时的端口去连
+pub fn cleanup(app: &AppHandle) {
+    if let Some(path) = info_path(app) {
+        let _ = std::fs::remove_file(path);
+    }
 }
 
 fn handle(app: &AppHandle, mut stream: TcpStream, token: &str) {

@@ -25,6 +25,11 @@ pub fn run() {
             bridge::start(app.handle().clone());
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                bridge::cleanup(app);
+            }
+        });
 }
