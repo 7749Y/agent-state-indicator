@@ -47,7 +47,7 @@ function App() {
   useEffect(() => connectBridge(control), [control]);
 
   useEffect(() => {
-    void resize.sync();
+    void resize.restore();
   }, [resize]);
 
   return (

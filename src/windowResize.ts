@@ -1,26 +1,56 @@
 import type { MouseEvent as ReactMouseEvent } from "react";
-import { getCurrentWindow, LogicalSize } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import {
+  applySize,
+  BASE,
+  clampPosition,
+  load,
+  maxWidth,
+  MIN_SCALE,
+  persist,
+  screen,
+  type Box,
+} from "./windowGeometry";
 
 /** 右下角角标：拖动时按初始比例缩放窗口，内容随根字号等比放大。 */
 export class WindowResize {
-  private static readonly BASE_WIDTH = 164;
-  private static readonly BASE_HEIGHT = 472;
-  private static readonly BASE_FONT = 16;
-  private static readonly MIN_SCALE = 0.5;
-  private static readonly MAX_SCALE = 3;
-
+  private box: Box | null = null;
+  private anchor = { x: 0, y: 0 };
   private origin: { pointerX: number; width: number } | null = null;
   private pending: number | null = null;
   private frame = 0;
 
-  /** 启动时按当前窗口宽度校准根字号，刷新后不会掉回默认大小 */
-  sync = async () => {
+  /** 启动时读回落盘的位置和尺寸，夹进屏幕后应用 */
+  restore = async () => {
     const win = getCurrentWindow();
-    const [size, scale] = await Promise.all([
+    const [position, size, scale, box] = await Promise.all([
+      win.outerPosition(),
       win.innerSize(),
       win.scaleFactor(),
+      screen(),
     ]);
-    this.apply(this.clamp(size.toLogical(scale).width));
+    this.box = box;
+
+    const saved = load();
+    const logical = position.toLogical(scale);
+    const width = Math.min(
+      Math.max(saved?.width ?? size.toLogical(scale).width, BASE.width * MIN_SCALE),
+      maxWidth(box),
+    );
+    const target = clampPosition(
+      box,
+      saved?.x ?? logical.x,
+      saved?.y ?? logical.y,
+      width,
+    );
+
+    try {
+      await applySize(width, target);
+      await persist(box); // 首次启动也留一份，屏幕上被夹过的位置以这份为准
+    } finally {
+      // 窗口是先隐藏再摆位，摆好才露面，看不到跳位
+      void win.show();
+    }
   };
 
   handleMouseDown = async (event: ReactMouseEvent) => {
@@ -29,11 +59,16 @@ export class WindowResize {
     event.stopPropagation();
 
     const win = getCurrentWindow();
-    const [size, scale] = await Promise.all([
+    const [position, size, scale, box] = await Promise.all([
+      win.outerPosition(),
       win.innerSize(),
       win.scaleFactor(),
+      screen(),
     ]);
+    const logical = position.toLogical(scale);
 
+    this.box = box;
+    this.anchor = { x: logical.x, y: logical.y };
     this.origin = {
       pointerX: event.screenX,
       width: size.toLogical(scale).width,
@@ -49,8 +84,9 @@ export class WindowResize {
   private handleMouseMove = (event: MouseEvent) => {
     if (!this.origin) return;
 
-    const width = this.clamp(this.origin.width + event.screenX - this.origin.pointerX);
-    this.pending = width;
+    this.pending = this.clamp(
+      this.origin.width + event.screenX - this.origin.pointerX,
+    );
     if (this.frame) return;
 
     this.frame = requestAnimationFrame(this.flush);
@@ -61,7 +97,7 @@ export class WindowResize {
     const width = this.pending;
     if (width === null) return;
     this.pending = null;
-    this.apply(width);
+    void applySize(width);
   };
 
   private handleMouseUp = () => {
@@ -71,23 +107,13 @@ export class WindowResize {
     this.frame = 0;
     this.pending = null;
     this.origin = null;
+    void persist(this.box);
   };
 
   private clamp(width: number) {
-    const { BASE_WIDTH, MIN_SCALE, MAX_SCALE } = WindowResize;
     return Math.min(
-      Math.max(width, BASE_WIDTH * MIN_SCALE),
-      BASE_WIDTH * MAX_SCALE,
-    );
-  }
-
-  /** 窗口尺寸与根字号一起按同一比例改，保证布局严丝合缝。 */
-  private apply(width: number) {
-    const { BASE_WIDTH, BASE_HEIGHT, BASE_FONT } = WindowResize;
-    const ratio = width / BASE_WIDTH;
-    document.documentElement.style.fontSize = `${BASE_FONT * ratio}px`;
-    void getCurrentWindow().setSize(
-      new LogicalSize(Math.round(width), Math.round(BASE_HEIGHT * ratio)),
+      Math.max(width, BASE.width * MIN_SCALE),
+      maxWidth(this.box, this.anchor),
     );
   }
 }

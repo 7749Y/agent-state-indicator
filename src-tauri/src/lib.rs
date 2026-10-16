@@ -23,6 +23,16 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![greet, bridge::sync_control])
         .setup(|app| {
             bridge::start(app.handle().clone());
+
+            // 窗口等前端摆好位置才 show，这里兜底：前端挂了也得露出来
+            if let Some(window) = app.get_webview_window("main") {
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_secs(3));
+                    if !window.is_visible().unwrap_or(true) {
+                        let _ = window.show();
+                    }
+                });
+            }
             Ok(())
         })
         .build(tauri::generate_context!())
