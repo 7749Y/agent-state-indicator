@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { connectBridge } from "./bridgeSync";
 import { exposeControl } from "./controlApi";
 import { GhostMode } from "./ghostMode";
 import { LedScreen } from "./LedScreen";
@@ -42,6 +43,8 @@ function App() {
   }, [tray]);
 
   useEffect(() => exposeControl(control), [control]);
+
+  useEffect(() => connectBridge(control), [control]);
 
   useEffect(() => {
     void resize.sync();

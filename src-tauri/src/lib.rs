@@ -1,3 +1,5 @@
+mod bridge;
+
 use tauri::Manager;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -17,7 +19,12 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .manage(bridge::ControlMirror::default())
+        .invoke_handler(tauri::generate_handler![greet, bridge::sync_control])
+        .setup(|app| {
+            bridge::start(app.handle().clone());
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
