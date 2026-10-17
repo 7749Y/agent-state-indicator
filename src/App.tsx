@@ -5,6 +5,7 @@ import { GhostMode } from "./ghostMode";
 import { LedScreen } from "./LedScreen";
 import { LightControl, type LightState } from "./lightControl";
 import { Skin } from "./skin";
+import { Sound } from "./sound";
 import { TrayMenu } from "./trayMenu";
 import { WindowDrag } from "./windowDrag";
 import { WindowResize } from "./windowResize";
@@ -29,6 +30,7 @@ function App() {
   const resize = useMemo(() => new WindowResize(), []);
   const ghost = useMemo(() => new GhostMode(), []);
   const skin = useMemo(() => new Skin(), []);
+  const sound = useMemo(() => new Sound(control), [control]);
   const tray = useMemo(() => new TrayMenu(ghost, skin), [ghost, skin]);
   const ghosting = useSyncExternalStore(ghost.subscribe, ghost.isGhosting);
   const active = useSyncExternalStore(control.subscribe, control.getState) + 1;
@@ -44,6 +46,8 @@ function App() {
   }, [tray]);
 
   useEffect(() => exposeControl(control), [control]);
+
+  useEffect(() => sound.start(), [sound]);
 
   useEffect(() => connectBridge(control), [control]);
 
