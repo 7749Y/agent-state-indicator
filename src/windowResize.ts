@@ -2,11 +2,10 @@ import type { MouseEvent as ReactMouseEvent } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import {
   applySize,
-  BASE,
   clampIntoView,
   clampPosition,
   maxWidth,
-  MIN_SCALE,
+  MIN_WIDTH,
   screen,
   type Box,
 } from "./windowGeometry";
@@ -32,7 +31,7 @@ export class WindowResize {
 
     const logical = position.toLogical(scale);
     const width = Math.min(
-      Math.max(size.toLogical(scale).width, BASE.width * MIN_SCALE),
+      Math.max(size.toLogical(scale).width, MIN_WIDTH),
       maxWidth(box),
     );
     const target = clampPosition(box, logical.x, logical.y, width);
@@ -103,9 +102,6 @@ export class WindowResize {
   };
 
   private clamp(width: number) {
-    return Math.min(
-      Math.max(width, BASE.width * MIN_SCALE),
-      maxWidth(this.box, this.anchor),
-    );
+    return Math.min(Math.max(width, MIN_WIDTH), maxWidth(this.box, this.anchor));
   }
 }

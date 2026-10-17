@@ -8,7 +8,9 @@ import {
 /** 比例基准：宽 164 逻辑像素 ↔ 高 472 ↔ 根字号 16 */
 export const BASE = { width: 164, height: 472, font: 16 } as const;
 
-export const MIN_SCALE = 0.5;
+/** 缩放下限：最小宽度（逻辑像素） */
+export const MIN_WIDTH = 136;
+
 export const MAX_SCALE = 3;
 
 /** 显示器可视区（逻辑像素） */
@@ -58,7 +60,7 @@ export function maxWidth(box: Box | null, anchor?: { x: number; y: number }) {
       (box.y + box.height - anchor.y) * (BASE.width / BASE.height),
     );
   }
-  return Math.max(BASE.width * MIN_SCALE, Math.min(limit, room));
+  return Math.max(MIN_WIDTH, Math.min(limit, room));
 }
 
 /** 把左上角夹进屏幕，保证整窗可见 */
