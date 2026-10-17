@@ -1,6 +1,6 @@
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
-import { clampPosition, persist, screen, type Box } from "./windowGeometry";
+import { clampIntoView, clampPosition, screen, type Box } from "./windowGeometry";
 
 /** 窗口拖动：在窗口内按下左键，窗口持续跟随光标移动，但夹在屏幕里。 */
 export class WindowDrag {
@@ -81,6 +81,6 @@ export class WindowDrag {
     this.frame = 0;
     this.pending = null;
     this.origin = null;
-    void persist(this.box);
+    void clampIntoView(this.box);
   };
 }

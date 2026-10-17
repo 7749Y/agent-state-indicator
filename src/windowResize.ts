@@ -3,11 +3,10 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import {
   applySize,
   BASE,
+  clampIntoView,
   clampPosition,
-  load,
   maxWidth,
   MIN_SCALE,
-  persist,
   screen,
   type Box,
 } from "./windowGeometry";
@@ -20,7 +19,7 @@ export class WindowResize {
   private pending: number | null = null;
   private frame = 0;
 
-  /** 启动时读回落盘的位置和尺寸，夹进屏幕后应用 */
+  /** 启动时按插件恢复出来的尺寸校准根字号，并把窗口夹回屏幕 */
   restore = async () => {
     const win = getCurrentWindow();
     const [position, size, scale, box] = await Promise.all([
@@ -31,22 +30,15 @@ export class WindowResize {
     ]);
     this.box = box;
 
-    const saved = load();
     const logical = position.toLogical(scale);
     const width = Math.min(
-      Math.max(saved?.width ?? size.toLogical(scale).width, BASE.width * MIN_SCALE),
+      Math.max(size.toLogical(scale).width, BASE.width * MIN_SCALE),
       maxWidth(box),
     );
-    const target = clampPosition(
-      box,
-      saved?.x ?? logical.x,
-      saved?.y ?? logical.y,
-      width,
-    );
+    const target = clampPosition(box, logical.x, logical.y, width);
 
     try {
       await applySize(width, target);
-      await persist(box); // 首次启动也留一份，屏幕上被夹过的位置以这份为准
     } finally {
       // 窗口是先隐藏再摆位，摆好才露面，看不到跳位
       void win.show();
@@ -107,7 +99,7 @@ export class WindowResize {
     this.frame = 0;
     this.pending = null;
     this.origin = null;
-    void persist(this.box);
+    void clampIntoView(this.box);
   };
 
   private clamp(width: number) {

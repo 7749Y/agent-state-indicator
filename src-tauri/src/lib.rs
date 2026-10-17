@@ -18,6 +18,15 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }))
+        // 位置尺寸交给官方插件存取，只存这两样
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(
+                    tauri_plugin_window_state::StateFlags::POSITION
+                        | tauri_plugin_window_state::StateFlags::SIZE,
+                )
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
         .manage(bridge::ControlMirror::default())
         .invoke_handler(tauri::generate_handler![greet, bridge::sync_control])

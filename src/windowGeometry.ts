@@ -19,37 +19,6 @@ export interface Box {
   height: number;
 }
 
-/** 落盘的位置和宽度，高度由比例推出来 */
-export interface Saved {
-  x: number;
-  y: number;
-  width: number;
-}
-
-const KEY = "window-geometry";
-
-export function load(): Saved | null {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return null;
-    const { x, y, width } = JSON.parse(raw) as Partial<Saved>;
-    if (![x, y, width].every((v) => typeof v === "number" && Number.isFinite(v))) {
-      return null;
-    }
-    return { x: x as number, y: y as number, width: width as number };
-  } catch {
-    return null;
-  }
-}
-
-function save(geometry: Saved) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(geometry));
-  } catch {
-    // 存不上就算了，下次按默认走
-  }
-}
-
 /** 当前窗口所在显示器的可视区（避让任务栏），拿不到就返回 null（不限制） */
 export async function screen(): Promise<Box | null> {
   // screen.avail* 给的就是去掉任务栏的工作区，还跟着窗口所在的屏走
@@ -109,8 +78,8 @@ export function clampPosition(
   };
 }
 
-/** 读回当前窗口的落位，夹进屏幕，落盘 */
-export async function persist(box?: Box | null) {
+/** 把当前窗口夹回屏幕，只动位置（位置尺寸的存取由 window-state 插件管） */
+export async function clampIntoView(box?: Box | null) {
   const win = getCurrentWindow();
   const [position, size, scale] = await Promise.all([
     win.outerPosition(),
@@ -119,22 +88,18 @@ export async function persist(box?: Box | null) {
   ]);
 
   const logical = position.toLogical(scale);
-  const width = size.toLogical(scale).width;
-  const fixed = clampPosition(box ?? (await screen()), logical.x, logical.y, width);
+  const target = clampPosition(
+    box ?? (await screen()),
+    logical.x,
+    logical.y,
+    size.toLogical(scale).width,
+  );
 
-  if (fixed.x !== logical.x || fixed.y !== logical.y) {
+  if (target.x !== logical.x || target.y !== logical.y) {
     void win.setPosition(
-      new LogicalPosition(Math.round(fixed.x), Math.round(fixed.y)),
+      new LogicalPosition(Math.round(target.x), Math.round(target.y)),
     );
   }
-
-  const rounded = {
-    x: Math.round(fixed.x),
-    y: Math.round(fixed.y),
-    width: Math.round(width),
-  };
-  save(rounded);
-  return rounded;
 }
 
 /** 设定尺寸，顺带把根字号按同一比例改，布局才严丝合缝 */
