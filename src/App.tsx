@@ -1,4 +1,9 @@
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+  type CSSProperties,
+} from "react";
 import { connectBridge } from "./bridgeSync";
 import { exposeControl } from "./controlApi";
 import { GhostMode } from "./ghostMode";
@@ -31,8 +36,15 @@ function App() {
   const ghost = useMemo(() => new GhostMode(), []);
   const skin = useMemo(() => new Skin(), []);
   const sound = useMemo(() => new Sound(control), [control]);
-  const tray = useMemo(() => new TrayMenu(ghost, skin), [ghost, skin]);
+  const tray = useMemo(
+    () => new TrayMenu(ghost, skin, control, sound),
+    [ghost, skin, control, sound],
+  );
   const ghosting = useSyncExternalStore(ghost.subscribe, ghost.isGhosting);
+  const transparency = useSyncExternalStore(
+    ghost.subscribe,
+    ghost.getTransparency,
+  );
   const active = useSyncExternalStore(control.subscribe, control.getState) + 1;
   const label = useSyncExternalStore(control.subscribe, control.getDisplay);
 
@@ -43,6 +55,16 @@ function App() {
 
   useEffect(() => {
     void tray.mount();
+  }, [tray]);
+
+  // 右键弹托盘同款菜单，顶掉网页自带的调试菜单
+  useEffect(() => {
+    const onContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+      void tray.popup(event.clientX, event.clientY);
+    };
+    window.addEventListener("contextmenu", onContextMenu);
+    return () => window.removeEventListener("contextmenu", onContextMenu);
   }, [tray]);
 
   useEffect(() => exposeControl(control), [control]);
@@ -58,6 +80,9 @@ function App() {
   return (
     <main
       className={ghosting ? "container ghosting" : "container"}
+      style={
+        { "--ghost-opacity": (100 - transparency) / 100 } as CSSProperties
+      }
       onMouseDown={drag.handleMouseDown}
     >
       <div className="traffic-light">

@@ -38,6 +38,7 @@ function save(saved: Saved) {
 export class LightControl {
   private state: LightState;
   private text: string;
+  private resetSnapshot: Saved | null = null;
   private listeners = new Set<() => void>();
 
   constructor(state: LightState = -1, text = "") {
@@ -64,6 +65,23 @@ export class LightControl {
     this.text = text;
     save({ state, text });
     this.listeners.forEach((listener) => listener());
+  }
+
+  /** 重置为 state=-1、text=""。重置前不是 -1 的话留一份快照给撤销 */
+  reset() {
+    if (this.state !== -1) {
+      this.resetSnapshot = { state: this.state, text: this.text };
+    }
+    this.set(-1, "");
+  }
+
+  /** 只在 state 为 -1 且有快照时可撤销，撤销后回到重置前的参数 */
+  canUndo = () => this.resetSnapshot !== null && this.state === -1;
+
+  undo() {
+    if (!this.canUndo()) return;
+    const { state, text } = this.resetSnapshot as Saved;
+    this.set(state, text);
   }
 
   subscribe = (listener: () => void) => {

@@ -1,19 +1,31 @@
 import { defaultWindowIcon, exit } from "@tauri-apps/api/app";
-import { CheckMenuItem, Menu, Submenu } from "@tauri-apps/api/menu";
+import { LogicalPosition } from "@tauri-apps/api/dpi";
+import { CheckMenuItem, Menu, MenuItem, Submenu } from "@tauri-apps/api/menu";
 import { TrayIcon } from "@tauri-apps/api/tray";
-import type { GhostMode } from "./ghostMode";
+import {
+  TRANSPARENCIES,
+  type GhostMode,
+  type Transparency,
+} from "./ghostMode";
+import type { LightControl } from "./lightControl";
 import { SKIN_LABELS, SKINS, type Skin, type SkinName } from "./skin";
+import type { Sound } from "./sound";
 
 const TRAY_ID = "traffic-light";
 
 /** 托盘菜单：托盘图标右键弹出菜单。 */
 export class TrayMenu {
   private mounting: Promise<void> | null = null;
+  private menu: Menu | null = null;
   private skinItems = new Map<SkinName, CheckMenuItem>();
+  private transparencyItems = new Map<Transparency, CheckMenuItem>();
+  private undoItem: MenuItem | null = null;
 
   constructor(
     private ghost: GhostMode,
     private skin: Skin,
+    private control: LightControl,
+    private sound: Sound,
   ) {}
 
   /** 挂载托盘与菜单，重复调用只会建一次。 */
@@ -22,15 +34,28 @@ export class TrayMenu {
     return this.mounting;
   }
 
+  /** 在窗口内坐标处弹出同一份菜单，用来顶掉网页默认右键菜单 */
+  async popup(x: number, y: number) {
+    await this.mount();
+    await this.menu?.popup(new LogicalPosition(x, y));
+  }
+
   private async create() {
+    const ghost = await CheckMenuItem.new({
+      id: "ghost",
+      text: "虚化",
+      checked: this.ghost.isGhosting(),
+      action: () => {
+        this.ghost.toggle();
+        void ghost.setChecked(this.ghost.isGhosting());
+      },
+    });
+
     const menu = await Menu.new({
       items: [
-        {
-          id: "ghost",
-          text: "虚化",
-          action: () => this.ghost.toggle(),
-        },
+        ghost,
         await this.skinSubmenu(),
+        await this.settingsSubmenu(),
         {
           id: "quit",
           text: "退出",
@@ -38,6 +63,10 @@ export class TrayMenu {
         },
       ],
     });
+    this.menu = menu;
+
+    // state 可能被桥或别的入口改，撤销可用性跟着变
+    this.control.subscribe(() => void this.refreshUndo());
 
     // 托盘活在进程里，刷新后还在：换掉菜单就行，别再新建一个
     const existing = await TrayIcon.getById(TRAY_ID);
@@ -72,5 +101,68 @@ export class TrayMenu {
         this.skinItems.forEach((item, key) => void item.setChecked(key === name));
       },
     });
+  }
+
+  /** 设置二级菜单：透明度、音效、重置、撤销 */
+  private async settingsSubmenu() {
+    const transparency = await this.transparencySubmenu();
+
+    const sound = await CheckMenuItem.new({
+      id: "sound",
+      text: "音效",
+      checked: this.sound.isEnabled(),
+      action: () => {
+        const enabled = !this.sound.isEnabled();
+        this.sound.setEnabled(enabled);
+        void sound.setChecked(enabled);
+      },
+    });
+
+    const reset = await MenuItem.new({
+      id: "reset",
+      text: "重置",
+      action: () => this.control.reset(),
+    });
+
+    this.undoItem = await MenuItem.new({
+      id: "undo",
+      text: "撤销",
+      enabled: this.control.canUndo(),
+      action: () => this.control.undo(),
+    });
+
+    return Submenu.new({
+      text: "设置",
+      items: [transparency, sound, reset, this.undoItem],
+    });
+  }
+
+  /** 透明度三级菜单：每档一个勾选项 */
+  private async transparencySubmenu() {
+    const items = await Promise.all(
+      TRANSPARENCIES.map((value) => this.transparencyItem(value)),
+    );
+    items.forEach((item, index) =>
+      this.transparencyItems.set(TRANSPARENCIES[index], item),
+    );
+    return Submenu.new({ text: "透明度", items });
+  }
+
+  private async transparencyItem(value: Transparency) {
+    return CheckMenuItem.new({
+      id: `transparency-${value}`,
+      text: String(value),
+      checked: this.ghost.getTransparency() === value,
+      action: () => {
+        this.ghost.setTransparency(value);
+        this.transparencyItems.forEach(
+          (item, key) => void item.setChecked(key === value),
+        );
+      },
+    });
+  }
+
+  private async refreshUndo() {
+    await this.undoItem?.setEnabled(this.control.canUndo());
   }
 }

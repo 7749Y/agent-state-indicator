@@ -39,7 +39,7 @@ body,
 }
 
 .container.ghosting {
-  opacity: 0.5;
+  opacity: var(--ghost-opacity, 0.5);
 }
 
 .container.ghosting .corner-handle {
