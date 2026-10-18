@@ -15,6 +15,7 @@ import {
 } from "./ghostMode";
 import type { LightControl } from "./lightControl";
 import { SKIN_LABELS, SKINS, type Skin, type SkinName } from "./skin";
+import type { SmallMode } from "./smallMode";
 import type { Sound } from "./sound";
 
 const TRAY_ID = "traffic-light";
@@ -32,6 +33,7 @@ export class TrayMenu {
     private skin: Skin,
     private control: LightControl,
     private sound: Sound,
+    private small: SmallMode,
   ) {}
 
   /** 挂载托盘与菜单，重复调用只会建一次。 */
@@ -57,9 +59,20 @@ export class TrayMenu {
       },
     });
 
+    const small = await CheckMenuItem.new({
+      id: "small-mode",
+      text: "小灯模式",
+      checked: this.small.isSmall(),
+      action: () => {
+        this.small.set(!this.small.isSmall());
+        void small.setChecked(this.small.isSmall());
+      },
+    });
+
     const menu = await Menu.new({
       items: [
         ghost,
+        small,
         await this.skinSubmenu(),
         await this.settingsSubmenu(),
         await PredefinedMenuItem.new({ item: "Separator" }),

@@ -58,6 +58,7 @@ export class WindowDrag {
       origin.windowX + (event.screenX - origin.pointerX),
       origin.windowY + (event.screenY - origin.pointerY),
       origin.width,
+      origin.height,
     );
     if (this.frame) return;
 

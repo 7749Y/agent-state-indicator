@@ -42,22 +42,28 @@ export async function screen(): Promise<Box | null> {
   return { x: origin.x, y: origin.y, width: size.width, height: size.height };
 }
 
-export function ratioWidth(width: number) {
-  return BASE.height * (width / BASE.width);
+/** 按宽度算高度；small 模式是正方形，高等于宽 */
+export function ratioHeight(width: number, small = false) {
+  return small ? width : BASE.height * (width / BASE.width);
 }
 
 /** 宽度上限：屏幕宽、屏幕高按比例折算、最大缩放，三者取小 */
-export function maxWidth(box: Box | null, anchor?: { x: number; y: number }) {
+export function maxWidth(
+  box: Box | null,
+  anchor?: { x: number; y: number },
+  small = false,
+) {
   const limit = BASE.width * MAX_SCALE;
   if (!box) return limit;
 
-  let room = Math.min(box.width, box.height * (BASE.width / BASE.height));
+  const ratio = small ? 1 : BASE.height / BASE.width;
+  let room = Math.min(box.width, box.height / ratio);
   if (anchor) {
     // 缩放锚在左上角，往下往右长，边界就是屏幕右下角
     room = Math.min(
       room,
       box.x + box.width - anchor.x,
-      (box.y + box.height - anchor.y) * (BASE.width / BASE.height),
+      (box.y + box.height - anchor.y) / ratio,
     );
   }
   return Math.max(MIN_WIDTH, Math.min(limit, room));
@@ -69,9 +75,9 @@ export function clampPosition(
   x: number,
   y: number,
   width: number,
+  height = ratioHeight(width),
 ) {
   if (!box) return { x, y };
-  const height = ratioWidth(width);
   const maxX = Math.max(box.x, box.x + box.width - width);
   const maxY = Math.max(box.y, box.y + box.height - height);
   return {
@@ -90,11 +96,13 @@ export async function clampIntoView(box?: Box | null) {
   ]);
 
   const logical = position.toLogical(scale);
+  const inner = size.toLogical(scale);
   const target = clampPosition(
     box ?? (await screen()),
     logical.x,
     logical.y,
-    size.toLogical(scale).width,
+    inner.width,
+    inner.height,
   );
 
   if (target.x !== logical.x || target.y !== logical.y) {
@@ -108,13 +116,14 @@ export async function clampIntoView(box?: Box | null) {
 export async function applySize(
   width: number,
   position?: { x: number; y: number },
+  height = ratioHeight(width),
 ) {
   const ratio = width / BASE.width;
   document.documentElement.style.fontSize = `${BASE.font * ratio}px`;
 
   const win = getCurrentWindow();
   const jobs: Promise<unknown>[] = [
-    win.setSize(new LogicalSize(Math.round(width), Math.round(ratioWidth(width)))),
+    win.setSize(new LogicalSize(Math.round(width), Math.round(height))),
   ];
   if (position) {
     jobs.push(

@@ -1,17 +1,21 @@
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import type { SmallMode } from "./smallMode";
 import {
   applySize,
   clampIntoView,
   clampPosition,
   maxWidth,
   MIN_WIDTH,
+  ratioHeight,
   screen,
   type Box,
 } from "./windowGeometry";
 
 /** 右下角角标：拖动时按初始比例缩放窗口，内容随根字号等比放大。 */
 export class WindowResize {
+  constructor(private small: SmallMode) {}
+
   private box: Box | null = null;
   private anchor = { x: 0, y: 0 };
   private origin: { pointerX: number; width: number } | null = null;
@@ -30,14 +34,16 @@ export class WindowResize {
     this.box = box;
 
     const logical = position.toLogical(scale);
+    const small = this.small.isSmall();
     const width = Math.min(
       Math.max(size.toLogical(scale).width, MIN_WIDTH),
-      maxWidth(box),
+      maxWidth(box, undefined, small),
     );
-    const target = clampPosition(box, logical.x, logical.y, width);
+    const height = ratioHeight(width, small);
+    const target = clampPosition(box, logical.x, logical.y, width, height);
 
     try {
-      await applySize(width, target);
+      await applySize(width, target, height);
     } finally {
       // 窗口是先隐藏再摆位，摆好才露面，看不到跳位
       void win.show();
@@ -88,7 +94,7 @@ export class WindowResize {
     const width = this.pending;
     if (width === null) return;
     this.pending = null;
-    void applySize(width);
+    void applySize(width, undefined, ratioHeight(width, this.small.isSmall()));
   };
 
   private handleMouseUp = () => {
@@ -101,7 +107,31 @@ export class WindowResize {
     void clampIntoView(this.box);
   };
 
+  /** 切到/离开小灯模式：宽度不变，高度在正方形与原比例之间换 */
+  applySmall = async (small: boolean) => {
+    const win = getCurrentWindow();
+    const [position, size, scale, box] = await Promise.all([
+      win.outerPosition(),
+      win.innerSize(),
+      win.scaleFactor(),
+      screen(),
+    ]);
+    const logical = position.toLogical(scale);
+    const inner = size.toLogical(scale);
+
+    const width = Math.min(
+      Math.max(inner.width, MIN_WIDTH),
+      maxWidth(box, undefined, small),
+    );
+    const height = ratioHeight(width, small);
+    const target = clampPosition(box, logical.x, logical.y, width, height);
+    await applySize(width, target, height);
+  };
+
   private clamp(width: number) {
-    return Math.min(Math.max(width, MIN_WIDTH), maxWidth(this.box, this.anchor));
+    return Math.min(
+      Math.max(width, MIN_WIDTH),
+      maxWidth(this.box, this.anchor, this.small.isSmall()),
+    );
   }
 }

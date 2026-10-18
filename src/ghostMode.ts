@@ -34,16 +34,43 @@ function save(value: Transparency) {
 export class GhostMode {
   private ghosting = false;
   private transparency: Transparency = load();
+  private revealed = false;
+  private revealTimer: number | null = null;
   private listeners = new Set<() => void>();
 
   /** 虚化与普通模式来回切。 */
   toggle = () => {
     this.ghosting = !this.ghosting;
+    if (!this.ghosting) this.clearReveal();
     void getCurrentWindow().setIgnoreCursorEvents(this.ghosting);
     this.listeners.forEach((listener) => listener());
   };
 
   isGhosting = () => this.ghosting;
+
+  /** 虚化中临时取消透明度，ms 后恢复；连续调用重新计时 */
+  reveal = (ms = 3000) => {
+    if (!this.ghosting) return;
+
+    this.revealed = true;
+    if (this.revealTimer !== null) clearTimeout(this.revealTimer);
+    this.revealTimer = window.setTimeout(() => {
+      this.revealTimer = null;
+      this.revealed = false;
+      this.listeners.forEach((listener) => listener());
+    }, ms);
+    this.listeners.forEach((listener) => listener());
+  };
+
+  isRevealed = () => this.revealed;
+
+  private clearReveal() {
+    if (this.revealTimer !== null) {
+      clearTimeout(this.revealTimer);
+      this.revealTimer = null;
+    }
+    this.revealed = false;
+  }
 
   getTransparency = () => this.transparency;
 

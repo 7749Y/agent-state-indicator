@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useSyncExternalStore,
   type CSSProperties,
 } from "react";
@@ -10,6 +11,7 @@ import { GhostMode } from "./ghostMode";
 import { LedScreen } from "./LedScreen";
 import { LightControl, type LightState } from "./lightControl";
 import { Skin } from "./skin";
+import { SmallMode } from "./smallMode";
 import { Sound } from "./sound";
 import { TrayMenu } from "./trayMenu";
 import { WindowDrag } from "./windowDrag";
@@ -32,19 +34,22 @@ const LED_OPTIONS = {
 function App() {
   const control = useMemo(() => new LightControl(STATE, LED_TEXT), []);
   const drag = useMemo(() => new WindowDrag(), []);
-  const resize = useMemo(() => new WindowResize(), []);
+  const small = useMemo(() => new SmallMode(), []);
+  const resize = useMemo(() => new WindowResize(small), [small]);
   const ghost = useMemo(() => new GhostMode(), []);
   const skin = useMemo(() => new Skin(), []);
   const sound = useMemo(() => new Sound(control), [control]);
   const tray = useMemo(
-    () => new TrayMenu(ghost, skin, control, sound),
-    [ghost, skin, control, sound],
+    () => new TrayMenu(ghost, skin, control, sound, small),
+    [ghost, skin, control, sound, small],
   );
   const ghosting = useSyncExternalStore(ghost.subscribe, ghost.isGhosting);
   const transparency = useSyncExternalStore(
     ghost.subscribe,
     ghost.getTransparency,
   );
+  const revealed = useSyncExternalStore(ghost.subscribe, ghost.isRevealed);
+  const smallOn = useSyncExternalStore(small.subscribe, small.isSmall);
   const active = useSyncExternalStore(control.subscribe, control.getState) + 1;
   const label = useSyncExternalStore(control.subscribe, control.getDisplay);
 
@@ -71,31 +76,55 @@ function App() {
 
   useEffect(() => sound.start(), [sound]);
 
+  // 虚化中切换 state：临时取消透明度，过几秒再恢复
+  useEffect(() => {
+    ghost.reveal();
+  }, [ghost, active]);
+
   useEffect(() => connectBridge(control), [control]);
 
   useEffect(() => {
     void resize.restore();
   }, [resize]);
 
+  // 切换小灯模式时改窗口比例；启动那次交给 restore
+  const lastSmall = useRef(smallOn);
+  useEffect(() => {
+    if (lastSmall.current === smallOn) return;
+    lastSmall.current = smallOn;
+    void resize.applySmall(smallOn);
+  }, [resize, smallOn]);
+
   return (
     <main
-      className={ghosting ? "container ghosting" : "container"}
+      className={`container${ghosting ? " ghosting" : ""}${smallOn ? " small" : ""}`}
       style={
-        { "--ghost-opacity": (100 - transparency) / 100 } as CSSProperties
+        {
+          "--ghost-opacity": revealed ? 1 : (100 - transparency) / 100,
+        } as CSSProperties
       }
       onMouseDown={drag.handleMouseDown}
     >
       <div className="traffic-light">
-        {LIGHTS.map((color, i) => (
-          <div
-            key={color}
-            className={`lamp ${color} ${i === active ? "on" : "off"}`}
-          >
+        {smallOn ? (
+          <div className={`lamp ${LIGHTS[active]} on`}>
             <span className="face" />
             <span className="mouth" />
           </div>
-        ))}
-        <LedScreen options={ledOptions} />
+        ) : (
+          <>
+            {LIGHTS.map((color, i) => (
+              <div
+                key={color}
+                className={`lamp ${color} ${i === active ? "on" : "off"}`}
+              >
+                <span className="face" />
+                <span className="mouth" />
+              </div>
+            ))}
+            <LedScreen options={ledOptions} />
+          </>
+        )}
       </div>
       <div
         className="corner-handle"
