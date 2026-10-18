@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!-- 托盘图标：红绿灯 -->
+  <rect x="52" y="16" width="152" height="224" rx="46" fill="#2b303b" stroke="#eef1f5" stroke-width="7"/>
+  <rect x="68" y="32" width="120" height="192" rx="30" fill="#3a4150"/>
+  <circle cx="128" cy="76" r="29" fill="#ff4d5e"/>
+  <circle cx="128" cy="128" r="29" fill="#ffc93c"/>
+  <circle cx="128" cy="180" r="29" fill="#3ddc84"/>
+  <circle cx="118" cy="66" r="8" fill="#ffffff" opacity="0.45"/>
+  <circle cx="118" cy="118" r="8" fill="#ffffff" opacity="0.45"/>
+  <circle cx="118" cy="170" r="8" fill="#ffffff" opacity="0.45"/>
+</svg>
