@@ -1,6 +1,12 @@
 import { defaultWindowIcon, exit } from "@tauri-apps/api/app";
 import { LogicalPosition } from "@tauri-apps/api/dpi";
-import { CheckMenuItem, Menu, MenuItem, Submenu } from "@tauri-apps/api/menu";
+import {
+  CheckMenuItem,
+  Menu,
+  MenuItem,
+  PredefinedMenuItem,
+  Submenu,
+} from "@tauri-apps/api/menu";
 import { TrayIcon } from "@tauri-apps/api/tray";
 import {
   TRANSPARENCIES,
@@ -56,6 +62,7 @@ export class TrayMenu {
         ghost,
         await this.skinSubmenu(),
         await this.settingsSubmenu(),
+        await PredefinedMenuItem.new({ item: "Separator" }),
         {
           id: "quit",
           text: "退出",
