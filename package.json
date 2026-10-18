@@ -1,12 +1,19 @@
 {
-  "name": "tauri-app",
+  "name": "agent-state-indicator",
   "private": true,
   "version": "0.1.0",
+  "description": "Agent state indicator shown as a traffic light",
+  "author": "nanayonkyuu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/7749Y/agent-state-indicator"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "prepare:cli": "node scripts/prepare-cli.mjs",
     "tauri": "tauri"
   },
   "dependencies": {

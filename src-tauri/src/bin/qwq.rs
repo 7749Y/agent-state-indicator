@@ -15,7 +15,7 @@ use std::time::{Duration, Instant};
 
 /// 跟 tauri.conf.json 里的 identifier 对应
 const APP_DIR: &str = "com.nanakyuu.test";
-const APP_EXE: &str = "tauri-app.exe";
+const APP_EXE: &str = "asi.exe";
 const WAIT_LIMIT: Duration = Duration::from_secs(15);
 
 struct Info {

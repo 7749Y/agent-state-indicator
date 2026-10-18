@@ -1,5 +1,6 @@
 import { defaultWindowIcon, exit } from "@tauri-apps/api/app";
 import { LogicalPosition } from "@tauri-apps/api/dpi";
+import { Image } from "@tauri-apps/api/image";
 import {
   CheckMenuItem,
   Menu,
@@ -88,20 +89,34 @@ export class TrayMenu {
     // state 可能被桥或别的入口改，撤销可用性跟着变
     this.control.subscribe(() => void this.refreshUndo());
 
-    // 托盘活在进程里，刷新后还在：换掉菜单就行，别再新建一个
+    const icon = await this.trayIcon();
+
+    // 托盘活在进程里，刷新后还在：换掉菜单和图标就行，别再新建一个
     const existing = await TrayIcon.getById(TRAY_ID);
     if (existing) {
       await existing.setMenu(menu);
+      if (icon) await existing.setIcon(icon);
       return;
     }
 
     await TrayIcon.new({
       id: TRAY_ID,
       tooltip: "红绿灯",
-      icon: (await defaultWindowIcon()) ?? undefined,
+      icon: icon ?? (await defaultWindowIcon()) ?? undefined,
       menu,
       showMenuOnLeftClick: false,
     });
+  }
+
+  /** 自定义托盘图标；读不到就退回默认图标 */
+  private async trayIcon() {
+    try {
+      const response = await fetch("/tray.png");
+      if (!response.ok) return null;
+      return await Image.fromBytes(await response.arrayBuffer());
+    } catch {
+      return null;
+    }
   }
 
   /** 皮肤二级菜单：每套一个勾选项，点哪项切哪项 */

@@ -1,8 +1,10 @@
 [package]
 name = "tauri-app"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Agent state indicator shown as a traffic light"
+authors = ["nanayonkyuu"]
+repository = "https://github.com/7749Y/agent-state-indicator"
+homepage = "https://github.com/7749Y/agent-state-indicator"
 edition = "2024"
 default-run = "tauri-app"
 
