@@ -71,3 +71,13 @@
     System::Call 'user32::SendMessageTimeoutW(i 0xFFFF, i 0x001A, i 0, w "Environment", i 0, i 5000, *i .r0)'
   cli_path_done:
 !macroend
+
+; 勾选删除应用数据时，连安装目录里的数据目录一起清掉。
+; 放在 POSTUNINSTALL：此时进程已询问结束，文件锁少；删不掉的排到重启后。
+!macro NSIS_HOOK_POSTUNINSTALL
+  ${If} $DeleteAppDataCheckboxState = 1
+  ${AndIf} $UpdateMode <> 1
+    RMDir /r /REBOOTOK "$INSTDIR\com.nanakyuu.asi"
+    RMDir "$INSTDIR"
+  ${EndIf}
+!macroend
