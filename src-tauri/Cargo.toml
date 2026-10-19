@@ -1,6 +1,6 @@
 [package]
 name = "tauri-app"
-version = "0.5.0"
+version = "0.6.0"
 description = "Agent state indicator shown as a traffic light"
 authors = ["nanayonkyuu"]
 repository = "https://github.com/7749Y/agent-state-indicator"
