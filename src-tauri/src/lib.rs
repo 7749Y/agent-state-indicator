@@ -1,4 +1,6 @@
 mod bridge;
+mod paths;
+mod window_state;
 
 use tauri::Manager;
 
@@ -18,15 +20,6 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }))
-        // 位置尺寸交给官方插件存取，只存这两样
-        .plugin(
-            tauri_plugin_window_state::Builder::default()
-                .with_state_flags(
-                    tauri_plugin_window_state::StateFlags::POSITION
-                        | tauri_plugin_window_state::StateFlags::SIZE,
-                )
-                .build(),
-        )
         .plugin(tauri_plugin_opener::init())
         .manage(bridge::ControlMirror::default())
         .invoke_handler(tauri::generate_handler![greet, bridge::sync_control])
@@ -35,6 +28,7 @@ pub fn run() {
 
             // 窗口等前端摆好位置才 show，这里兜底：前端挂了也得露出来
             if let Some(window) = app.get_webview_window("main") {
+                window_state::restore(&window);
                 std::thread::spawn(move || {
                     std::thread::sleep(std::time::Duration::from_secs(3));
                     if !window.is_visible().unwrap_or(true) {
@@ -48,7 +42,10 @@ pub fn run() {
         .expect("error while building tauri application")
         .run(|app, event| {
             if let tauri::RunEvent::Exit = event {
-                bridge::cleanup(app);
+                if let Some(window) = app.get_webview_window("main") {
+                    window_state::save(&window);
+                }
+                bridge::cleanup();
             }
         });
 }

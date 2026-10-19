@@ -1,7 +1,7 @@
 //! 本地 HTTP 桥：给外部工具一个调 ctl 的入口。
 //!
 //! 监听 127.0.0.1:0 让系统分配端口，启动时把 { port, token } 写进
-//! app_data_dir/bridge.json，请求要带 `Authorization: Bearer <token>`。
+//! 安装目录/com.nanakyuu.asi/bridge.json，请求要带 `Authorization: Bearer <token>`。
 //! GET / 读回 "[state] text"，POST / 收 {"state":0,"text":"..."} 写参数。
 
 use std::collections::hash_map::DefaultHasher;
@@ -63,7 +63,7 @@ pub fn start(app: AppHandle) {
     };
     let token = make_token();
 
-    if !write_info(&app, port, &token) {
+    if !write_info(port, &token) {
         return;
     }
 
@@ -92,12 +92,12 @@ fn make_token() -> String {
     token
 }
 
-fn info_path(app: &AppHandle) -> Option<std::path::PathBuf> {
-    app.path().app_data_dir().ok().map(|dir| dir.join("bridge.json"))
+fn info_path() -> Option<std::path::PathBuf> {
+    crate::paths::data_dir().map(|dir| dir.join("bridge.json"))
 }
 
-fn write_info(app: &AppHandle, port: u16, token: &str) -> bool {
-    let Some(path) = info_path(app) else {
+fn write_info(port: u16, token: &str) -> bool {
+    let Some(path) = info_path() else {
         return false;
     };
     let Some(dir) = path.parent() else {
@@ -112,8 +112,8 @@ fn write_info(app: &AppHandle, port: u16, token: &str) -> bool {
 }
 
 /// 退出时删掉 bridge.json，免得 CLI 照着过时的端口去连
-pub fn cleanup(app: &AppHandle) {
-    if let Some(path) = info_path(app) {
+pub fn cleanup() {
+    if let Some(path) = info_path() {
         let _ = std::fs::remove_file(path);
     }
 }

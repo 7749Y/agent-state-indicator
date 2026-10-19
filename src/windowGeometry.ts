@@ -86,7 +86,7 @@ export function clampPosition(
   };
 }
 
-/** 把当前窗口夹回屏幕，只动位置（位置尺寸的存取由 window-state 插件管） */
+/** 把当前窗口夹回屏幕，只动位置（位置尺寸的存取由后端 window_state 管） */
 export async function clampIntoView(box?: Box | null) {
   const win = getCurrentWindow();
   const [position, size, scale] = await Promise.all([
