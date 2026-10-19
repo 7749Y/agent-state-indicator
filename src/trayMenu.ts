@@ -9,6 +9,7 @@ import {
   Submenu,
 } from "@tauri-apps/api/menu";
 import { TrayIcon } from "@tauri-apps/api/tray";
+import trayIconUrl from "./assets/tray.png";
 import {
   TRANSPARENCIES,
   type GhostMode,
@@ -111,10 +112,11 @@ export class TrayMenu {
   /** 自定义托盘图标；读不到就退回默认图标 */
   private async trayIcon() {
     try {
-      const response = await fetch("/tray.png");
+      const response = await fetch(trayIconUrl);
       if (!response.ok) return null;
       return await Image.fromBytes(await response.arrayBuffer());
-    } catch {
+    } catch (error) {
+      console.error("托盘图标读取失败", error);
       return null;
     }
   }
