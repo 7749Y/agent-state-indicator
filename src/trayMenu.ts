@@ -19,6 +19,7 @@ import type { LightControl } from "./lightControl";
 import { SKIN_LABELS, SKINS, type Skin, type SkinName } from "./skin";
 import type { SmallMode } from "./smallMode";
 import type { Sound } from "./sound";
+import type { UpdateCheck } from "./updateCheck";
 
 const TRAY_ID = "traffic-light";
 
@@ -36,6 +37,7 @@ export class TrayMenu {
     private control: LightControl,
     private sound: Sound,
     private small: SmallMode,
+    private update: UpdateCheck,
   ) {}
 
   /** 挂载托盘与菜单，重复调用只会建一次。 */
@@ -71,12 +73,20 @@ export class TrayMenu {
       },
     });
 
+    const update = await MenuItem.new({
+      id: "update",
+      text: "更新",
+      enabled: this.update.isAvailable(),
+      action: () => void this.update.open(),
+    });
+
     const menu = await Menu.new({
       items: [
         ghost,
         small,
         await this.skinSubmenu(),
         await this.settingsSubmenu(),
+        update,
         await PredefinedMenuItem.new({ item: "Separator" }),
         {
           id: "quit",
@@ -89,6 +99,11 @@ export class TrayMenu {
 
     // state 可能被桥或别的入口改，撤销可用性跟着变
     this.control.subscribe(() => void this.refreshUndo());
+
+    // 启动检测是异步的，出结果后再放开更新项
+    const applyUpdate = () => void update.setEnabled(this.update.isAvailable());
+    this.update.subscribe(applyUpdate);
+    applyUpdate();
 
     const icon = await this.trayIcon();
 

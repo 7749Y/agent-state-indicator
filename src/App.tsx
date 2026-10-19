@@ -14,6 +14,7 @@ import { Skin } from "./skin";
 import { SmallMode } from "./smallMode";
 import { Sound } from "./sound";
 import { TrayMenu } from "./trayMenu";
+import { UpdateCheck } from "./updateCheck";
 import { WindowDrag } from "./windowDrag";
 import { WindowResize } from "./windowResize";
 
@@ -39,9 +40,10 @@ function App() {
   const ghost = useMemo(() => new GhostMode(), []);
   const skin = useMemo(() => new Skin(), []);
   const sound = useMemo(() => new Sound(control), [control]);
+  const update = useMemo(() => new UpdateCheck(), []);
   const tray = useMemo(
-    () => new TrayMenu(ghost, skin, control, sound, small),
-    [ghost, skin, control, sound, small],
+    () => new TrayMenu(ghost, skin, control, sound, small, update),
+    [ghost, skin, control, sound, small, update],
   );
   const ghosting = useSyncExternalStore(ghost.subscribe, ghost.isGhosting);
   const transparency = useSyncExternalStore(
@@ -61,6 +63,11 @@ function App() {
   useEffect(() => {
     void tray.mount();
   }, [tray]);
+
+  // 每次启动查一次新版本，结果通过 update 订阅同步到菜单
+  useEffect(() => {
+    void update.check();
+  }, [update]);
 
   // 右键弹托盘同款菜单，顶掉网页自带的调试菜单
   useEffect(() => {
