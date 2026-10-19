@@ -1,7 +1,7 @@
 //! 本地 HTTP 桥：给外部工具一个调 ctl 的入口。
 //!
 //! 监听 127.0.0.1:0 让系统分配端口，启动时把 { port, token } 写进
-//! 安装目录/com.nanakyuu.asi/bridge.json，请求要带 `Authorization: Bearer <token>`。
+//! 安装目录/com.nanayonkyuu.asi/bridge.json，请求要带 `Authorization: Bearer <token>`。
 //! GET / 读回 "[state] text"，POST / 收 {"state":0,"text":"..."} 写参数。
 
 use std::collections::hash_map::DefaultHasher;
