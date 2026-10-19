@@ -22,7 +22,12 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_opener::init())
         .manage(bridge::ControlMirror::default())
-        .invoke_handler(tauri::generate_handler![greet, bridge::sync_control])
+        .manage(bridge::BridgeInfo::default())
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            bridge::sync_control,
+            bridge::bridge_ready
+        ])
         .setup(|app| {
             // 配置里不自动建窗：WebView2 数据目录要指到安装目录，配置只收相对路径
             if let Some(config) = app.config().app.windows.first().cloned() {

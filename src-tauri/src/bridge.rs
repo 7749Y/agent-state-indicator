@@ -31,12 +31,40 @@ impl Control {
 #[derive(Default)]
 pub struct ControlMirror(pub Mutex<Control>);
 
+/// 端口和 token，等前端就绪后才写盘并交出
+#[derive(Default)]
+pub struct BridgeInfo(pub Mutex<Option<(u16, String)>>);
+
 /// 前端把最新参数推过来，桥读的就是这份
 #[tauri::command]
 pub fn sync_control(mirror: tauri::State<ControlMirror>, state: i32, text: String) {
     if let Ok(mut control) = mirror.0.lock() {
         *control = Control { state, text };
     }
+}
+
+/// 前端监听挂好后调用：先用真实参数铺满镜像，再落盘 bridge.json。
+/// 这样 CLI 一看到文件，读到和写进去的都不会被启动流程覆盖。
+#[tauri::command]
+pub fn bridge_ready(
+    mirror: tauri::State<ControlMirror>,
+    info: tauri::State<BridgeInfo>,
+    state: i32,
+    text: String,
+) -> bool {
+    let Ok(mut control) = mirror.0.lock() else {
+        return false;
+    };
+    *control = Control { state, text };
+    drop(control);
+
+    let Ok(mut info) = info.0.lock() else {
+        return false;
+    };
+    let Some((port, token)) = info.take() else {
+        return false;
+    };
+    write_info(port, &token)
 }
 
 struct Request {
@@ -63,8 +91,11 @@ pub fn start(app: AppHandle) {
     };
     let token = make_token();
 
-    if !write_info(port, &token) {
-        return;
+    // 先只监听；bridge.json 等前端就绪（bridge_ready）再写，避免 CLI 抢在界面之前读写
+    if let Some(info) = app.try_state::<BridgeInfo>() {
+        if let Ok(mut slot) = info.0.lock() {
+            *slot = Some((port, token.clone()));
+        }
     }
 
     thread::spawn(move || {
