@@ -3,7 +3,7 @@
   "productName": "agent-state-indicator",
   "mainBinaryName": "asi",
   "version": "0.1.0",
-  "identifier": "com.nanakyuu.test",
+  "identifier": "com.nanayonkyuu.test",
   "build": {
     "beforeDevCommand": "npm run prepare:cli && npm run dev",
     "devUrl": "http://localhost:1420",
@@ -44,6 +44,8 @@
     "externalBin": ["binaries/qwq"],
     "windows": {
       "nsis": {
+        "languages": ["SimpChinese"],
+        "installerIcon": "icons/nanayonkyuu.ico",
         "installerHooks": "installer/hooks.nsh"
       }
     }

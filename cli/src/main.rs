@@ -1,4 +1,4 @@
-//! 极简 CLI：读 exe 同目录/com.nanakyuu.asi/bridge.json，走本地 HTTP 桥读写红绿灯参数。
+//! 极简 CLI：读 exe 同目录/com.nanayonkyuu.asi/bridge.json，走本地 HTTP 桥读写红绿灯参数。
 //!
 //!   qwq g             读
 //!   qwq s 0 "文本"    写
@@ -14,7 +14,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 /// 跟主程序 paths.rs 里的目录名对应
-const APP_DIR: &str = "com.nanakyuu.asi";
+const APP_DIR: &str = "com.nanayonkyuu.asi";
 /// 打包后的主程序名，dev 里退回到 cargo 产物名
 const APP_EXES: [&str; 2] = ["asi.exe", "tauri-app.exe"];
 const WAIT_LIMIT: Duration = Duration::from_secs(15);

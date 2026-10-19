@@ -1,4 +1,4 @@
-//! 窗口位置尺寸落盘：和 bridge 共用安装目录下的 com.nanakyuu.asi。
+//! 窗口位置尺寸落盘：和 bridge 共用安装目录下的 com.nanayonkyuu.asi。
 
 use std::path::PathBuf;
 
