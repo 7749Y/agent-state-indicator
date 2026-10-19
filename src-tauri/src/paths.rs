@@ -12,3 +12,8 @@ pub fn data_dir() -> Option<PathBuf> {
         .map(PathBuf::from)?;
     Some(dir.join(APP_DIR))
 }
+
+/// WebView2 用户数据目录（localStorage 等都在这里）
+pub fn webview_dir() -> Option<PathBuf> {
+    data_dir().map(|dir| dir.join("webview"))
+}

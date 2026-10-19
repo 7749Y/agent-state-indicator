@@ -24,6 +24,17 @@ pub fn run() {
         .manage(bridge::ControlMirror::default())
         .invoke_handler(tauri::generate_handler![greet, bridge::sync_control])
         .setup(|app| {
+            // 配置里不自动建窗：WebView2 数据目录要指到安装目录，配置只收相对路径
+            if let Some(config) = app.config().app.windows.first().cloned() {
+                let mut builder =
+                    tauri::webview::WebviewWindowBuilder::from_config(app.handle(), &config)?;
+                if let Some(dir) = paths::webview_dir() {
+                    let _ = std::fs::create_dir_all(&dir);
+                    builder = builder.data_directory(dir);
+                }
+                builder.build()?;
+            }
+
             bridge::start(app.handle().clone());
 
             // 窗口等前端摆好位置才 show，这里兜底：前端挂了也得露出来
